@@ -1,16 +1,16 @@
 #![feature(reverse_bits)]
 
-pub struct Crc {
-    crc: u8,
-    poly: u8,
+pub struct Crc<T> {
+    crc: T,
+    poly: T,
     offset: usize,
     reflect: bool,
-    initial: u8,
-    final_xor: u8,
-    lookup_table: [u8; 256],
+    initial: T,
+    final_xor: T,
+    lookup_table: [T; 256],
 }
 
-impl Crc {
+impl Crc<u8> {
     pub fn new(poly: u8, width: usize, initial: u8, final_xor: u8, reflect: bool) -> Self {
         let offset = 8 - width;
         let mut crc = Self {
