@@ -62,15 +62,15 @@ impl Crc {
             self.crc = self.lookup_table[(self.crc ^ data[i]) as usize];
         }
 
+        self.crc()
+    }
+
+    pub fn crc(&self) -> u8 {
         if self.reflect {
             self.crc ^ self.final_xor
         } else {
             self.crc >> self.offset ^ self.final_xor
         }
-    }
-
-    pub fn crc(&self) -> u8 {
-        self.crc
     }
 
     pub fn init(&mut self) {
