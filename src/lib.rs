@@ -29,17 +29,8 @@ impl Crc {
     fn byte_crc(&self, byte: u8) -> u8 {
         let mut crc = byte;
         let poly = self.poly << self.offset;
-        let mask = 1u8 << self.offset;
 
-        for i in 0..self.offset {
-            if crc & 128 == 128 {
-                crc = (crc << 1) | (byte << i + 1 & mask);
-                crc = crc ^ poly;
-            } else {
-                crc = (crc << 1) | (byte << i + 1 & mask);
-            }
-        }
-        for _ in 0..8 - self.offset {
+        for _ in 0..8 {
             if crc & 128 == 128 {
                 crc <<= 1;
                 crc = crc ^ poly;
