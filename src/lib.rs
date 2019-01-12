@@ -13,7 +13,7 @@ pub struct Crc<T> {
 }
 
 macro_rules! crc_impl {
-    ($($t:ty)*) => ($(
+    ($($t:tt)*) => ($(
         impl Crc<$t> {
             pub fn new(poly: $t, width: usize, initial: $t, final_xor: $t, reflect: bool) -> Self {
                 let offset = size_of::<$t>() * 8 - width;
@@ -24,18 +24,19 @@ macro_rules! crc_impl {
                     reflect,
                     initial,
                     final_xor,
-                    lookup_table: [0 as $t; 256],
+                    lookup_table: [0; 256],
                 };
                 crc.make_lookup_table();
                 crc
             }
 
             fn byte_crc(&self, byte: u8) -> $t {
-                let mut crc = byte;
+                let mut crc = (byte as $t) << size_of::<$t>() * 8 - 8;
+                let mask = (1 as $t) << size_of::<$t>() * 8 - 1;
                 let poly = self.poly << self.offset;
 
                 for _ in 0..8 {
-                    if crc & 128 == 128 {
+                    if crc & mask == mask {
                         crc <<= 1;
                         crc = crc ^ poly;
                     } else {
@@ -47,24 +48,41 @@ macro_rules! crc_impl {
 
             fn make_lookup_table(&mut self) {
                 if self.reflect {
-                    for i in 0..256usize {
+                    for i in 0..256 {
                         self.lookup_table[i] = self.byte_crc((i as u8).reverse_bits()).reverse_bits();
                     }
                 } else {
-                    for i in 0..256usize {
+                    for i in 0..256 {
                         self.lookup_table[i] = self.byte_crc(i as u8);
                     }
                 }
             }
 
             pub fn update(&mut self, data: &[u8]) -> $t {
-                if !self.reflect {
-                    self.crc <<= self.offset;
-                }
+                macro_rules! update {
+                    (u8) => {
+                        if !self.reflect {
+                            self.crc <<= self.offset;
+                        }
 
-                for i in 0..data.len() {
-                    self.crc = self.lookup_table[(self.crc ^ data[i]) as usize];
+                        for i in 0..data.len() {
+                            self.crc = self.lookup_table[(self.crc ^ data[i]) as usize];
+                        }
+                    };
+                    ($_:ty) => {
+                        if self.reflect {
+                            for i in 0..data.len() {
+                                self.crc = self.crc >> 8 ^ self.lookup_table[(self.crc.to_le_bytes()[0] ^ data[i]) as usize];
+                            }
+                        } else {
+                            self.crc <<= self.offset;
+                            for i in 0..data.len() {
+                                self.crc = self.crc << 8 ^ self.lookup_table[(self.crc.to_be_bytes()[0] ^ data[i]) as usize];
+                            }
+                        }
+                    };
                 }
+                update!($t);
 
                 self.crc()
             }
@@ -84,7 +102,7 @@ macro_rules! crc_impl {
     )*)
 }
 
-crc_impl!(u8);
+crc_impl!(u8 u16 u32 u64);
 
 #[cfg(test)]
 mod tests;
