@@ -20,7 +20,7 @@ macro_rules! crc_impl {
                 let offset = size_of::<$t>() * 8 - width;
                 let mut crc = Self {
                     crc: initial,
-                    poly: poly << offset,
+                    poly: if reflect { (poly << offset).reverse_bits() } else { poly << offset },
                     offset,
                     reflect,
                     initial,
@@ -32,30 +32,37 @@ macro_rules! crc_impl {
             }
 
             fn byte_crc(&self, byte: u8) -> $t {
-                const MASK: $t = (1 as $t).reverse_bits();
-                const OFFSET: usize = size_of::<$t>() * 8 - 8;
+                let mut crc;
+                if self.reflect {
+                    crc = byte as $t;
+                    for _ in 0..8 {
+                        if crc & 1 == 1 {
+                            crc >>= 1;
+                            crc = crc ^ self.poly;
+                        } else {
+                            crc >>= 1;
+                        }
+                    }
+                } else {
+                    const MASK: $t = (1 as $t).reverse_bits();
+                    const OFFSET: usize = size_of::<$t>() * 8 - 8;
 
-                let mut crc = (byte as $t) << OFFSET;
-                for _ in 0..8 {
-                    if crc & MASK == MASK {
-                        crc <<= 1;
-                        crc = crc ^ self.poly;
-                    } else {
-                        crc <<= 1;
+                    crc = (byte as $t) << OFFSET;
+                    for _ in 0..8 {
+                        if crc & MASK == MASK {
+                            crc <<= 1;
+                            crc = crc ^ self.poly;
+                        } else {
+                            crc <<= 1;
+                        }
                     }
                 }
                 crc
             }
 
             fn make_lookup_table(&mut self) {
-                if self.reflect {
-                    for i in 0..256 {
-                        self.lookup_table[i] = self.byte_crc((i as u8).reverse_bits()).reverse_bits();
-                    }
-                } else {
-                    for i in 0..256 {
-                        self.lookup_table[i] = self.byte_crc(i as u8);
-                    }
+                for i in 0..256 {
+                    self.lookup_table[i] = self.byte_crc(i as u8);
                 }
             }
 
