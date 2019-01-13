@@ -31,38 +31,34 @@ macro_rules! crc_impl {
                 crc
             }
 
-            fn byte_crc(&self, byte: u8) -> $t {
-                let mut crc;
+            fn make_lookup_table(&mut self) {
                 if self.reflect {
-                    crc = byte as $t;
-                    for _ in 0..8 {
-                        if crc & 1 == 1 {
-                            crc >>= 1;
-                            crc = crc ^ self.poly;
-                        } else {
-                            crc >>= 1;
+                    for (i, v) in self.lookup_table.iter_mut().enumerate() {
+                        *v = i as $t;
+                        for _ in 0..8 {
+                            if *v & 1 == 1 {
+                                *v >>= 1;
+                                *v = *v ^ self.poly;
+                            } else {
+                                *v >>= 1;
+                            }
                         }
                     }
                 } else {
                     const MASK: $t = (1 as $t).reverse_bits();
                     const OFFSET: usize = size_of::<$t>() * 8 - 8;
 
-                    crc = (byte as $t) << OFFSET;
-                    for _ in 0..8 {
-                        if crc & MASK == MASK {
-                            crc <<= 1;
-                            crc = crc ^ self.poly;
-                        } else {
-                            crc <<= 1;
+                    for (i, v) in self.lookup_table.iter_mut().enumerate() {
+                        *v = (i as $t) << OFFSET;
+                        for _ in 0..8 {
+                            if *v & MASK == MASK {
+                                *v <<= 1;
+                                *v = *v ^ self.poly;
+                            } else {
+                                *v <<= 1;
+                            }
                         }
                     }
-                }
-                crc
-            }
-
-            fn make_lookup_table(&mut self) {
-                for i in 0..256 {
-                    self.lookup_table[i] = self.byte_crc(i as u8);
                 }
             }
 
