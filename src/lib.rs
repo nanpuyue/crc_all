@@ -1,4 +1,5 @@
 #![feature(reverse_bits)]
+#![feature(const_int_conversion)]
 
 use std::mem::size_of;
 
@@ -19,7 +20,7 @@ macro_rules! crc_impl {
                 let offset = size_of::<$t>() * 8 - width;
                 let mut crc = Self {
                     crc: initial,
-                    poly,
+                    poly: poly << offset,
                     offset,
                     reflect,
                     initial,
@@ -31,14 +32,14 @@ macro_rules! crc_impl {
             }
 
             fn byte_crc(&self, byte: u8) -> $t {
-                let mut crc = (byte as $t) << size_of::<$t>() * 8 - 8;
-                let mask = (1 as $t) << size_of::<$t>() * 8 - 1;
-                let poly = self.poly << self.offset;
+                const MASK: $t = (1 as $t).reverse_bits();
+                const OFFSET: usize = size_of::<$t>() * 8 - 8;
 
+                let mut crc = (byte as $t) << OFFSET;
                 for _ in 0..8 {
-                    if crc & mask == mask {
+                    if crc & MASK == MASK {
                         crc <<= 1;
-                        crc = crc ^ poly;
+                        crc = crc ^ self.poly;
                     } else {
                         crc <<= 1;
                     }
