@@ -69,19 +69,19 @@ macro_rules! crc_impl {
                             self.crc <<= self.offset;
                         }
 
-                        for i in 0..data.len() {
-                            self.crc = self.lookup_table[(self.crc ^ data[i]) as usize];
+                        for b in data {
+                            self.crc = self.lookup_table[(self.crc ^ b) as usize];
                         }
                     };
                     ($_:ty) => {
                         if self.reflect {
-                            for i in 0..data.len() {
-                                self.crc = self.crc >> 8 ^ self.lookup_table[(self.crc.to_le_bytes()[0] ^ data[i]) as usize];
+                            for b in data {
+                                self.crc = self.crc >> 8 ^ self.lookup_table[(self.crc.to_le_bytes()[0] ^ b) as usize];
                             }
                         } else {
                             self.crc <<= self.offset;
-                            for i in 0..data.len() {
-                                self.crc = self.crc << 8 ^ self.lookup_table[(self.crc.to_be_bytes()[0] ^ data[i]) as usize];
+                            for b in data {
+                                self.crc = self.crc << 8 ^ self.lookup_table[(self.crc.to_be_bytes()[0] ^ b) as usize];
                             }
                         }
                     };
