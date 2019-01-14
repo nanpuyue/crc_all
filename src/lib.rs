@@ -17,6 +17,8 @@ macro_rules! crc_impl {
     ($($t:tt)*) => ($(
         impl Crc<$t> {
             pub fn new(poly: $t, width: usize, init: $t, xorout: $t, reflect: bool) -> Self {
+                let offset = size_of::<$t>() * 8 - width;
+                let init = if reflect { init.reverse_bits() >> offset } else { init };
                 Self {
                     crc: init,
                     offset: size_of::<$t>() * 8 - width,
@@ -121,7 +123,7 @@ macro_rules! crc_impl {
     )*)
 }
 
-crc_impl!(u8 u16 u32 u64);
+crc_impl!(u8 u16 u32 u64 u128);
 
 #[cfg(test)]
 mod tests;
