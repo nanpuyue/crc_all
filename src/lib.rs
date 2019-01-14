@@ -119,6 +119,3 @@ macro_rules! crc_impl {
 }
 
 crc_impl!(u8 u16 u32 u64 u128);
-
-#[cfg(test)]
-mod tests;
