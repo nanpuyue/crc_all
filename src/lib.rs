@@ -8,21 +8,21 @@ pub struct Crc<T> {
     crc: T,
     offset: usize,
     reflect: bool,
-    initial: T,
-    final_xor: T,
+    init: T,
+    xorout: T,
     lookup_table: [T; 256],
 }
 
 macro_rules! crc_impl {
     ($($t:tt)*) => ($(
         impl Crc<$t> {
-            pub fn new(poly: $t, width: usize, initial: $t, final_xor: $t, reflect: bool) -> Self {
+            pub fn new(poly: $t, width: usize, init: $t, xorout: $t, reflect: bool) -> Self {
                 Self {
-                    crc: initial,
+                    crc: init,
                     offset: size_of::<$t>() * 8 - width,
                     reflect,
-                    initial,
-                    final_xor,
+                    init,
+                    xorout,
                     lookup_table: Self::make_lookup_table(poly, width, reflect),
                 }
             }
@@ -100,9 +100,9 @@ macro_rules! crc_impl {
 
             pub fn final_crc(&self, crc: &$t) -> $t {
                 if self.reflect {
-                    crc ^ self.final_xor
+                    crc ^ self.xorout
                 } else {
-                    crc >> self.offset ^ self.final_xor
+                    crc >> self.offset ^ self.xorout
                 }
             }
 
@@ -111,11 +111,11 @@ macro_rules! crc_impl {
             }
 
             pub fn init_crc(&self, crc: &mut $t) {
-                *crc = self.initial;
+                *crc = self.init;
             }
 
             pub fn init(&mut self) {
-                self.crc = self.initial;
+                self.crc = self.init;
             }
         }
     )*)
