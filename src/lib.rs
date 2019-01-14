@@ -1,7 +1,8 @@
 #![feature(reverse_bits)]
 #![feature(const_int_conversion)]
+#![allow(mutable_transmutes)]
 
-use std::mem::size_of;
+use std::mem::{size_of, transmute};
 
 pub struct Crc<T> {
     crc: T,
@@ -62,41 +63,55 @@ macro_rules! crc_impl {
                 lookup_table
             }
 
-            pub fn update(&mut self, data: &[u8]) -> $t {
+            pub fn update_crc(&self, crc: &mut $t, data: &[u8]) -> $t {
                 macro_rules! update {
                     (u8) => {
                         if !self.reflect {
-                            self.crc <<= self.offset;
+                            *crc <<= self.offset;
                         }
 
                         for b in data {
-                            self.crc = self.lookup_table[(self.crc ^ b) as usize];
+                            *crc = self.lookup_table[(*crc ^ b) as usize];
                         }
                     };
                     ($_:ty) => {
                         if self.reflect {
                             for b in data {
-                                self.crc = self.crc >> 8 ^ self.lookup_table[(self.crc.to_le_bytes()[0] ^ b) as usize];
+                                *crc = *crc >> 8 ^ self.lookup_table[(crc.to_le_bytes()[0] ^ b) as usize];
                             }
                         } else {
-                            self.crc <<= self.offset;
+                            *crc <<= self.offset;
                             for b in data {
-                                self.crc = self.crc << 8 ^ self.lookup_table[(self.crc.to_be_bytes()[0] ^ b) as usize];
+                                *crc = *crc << 8 ^ self.lookup_table[(crc.to_be_bytes()[0] ^ b) as usize];
                             }
                         }
                     };
                 }
                 update!($t);
 
-                self.crc()
+                self.final_crc(crc)
             }
 
-            pub fn crc(&self) -> $t {
-                if self.reflect {
-                    self.crc ^ self.final_xor
-                } else {
-                    self.crc >> self.offset ^ self.final_xor
+            pub fn update(&mut self, data: &[u8]) -> $t {
+                unsafe {
+                    self.update_crc(transmute::<_, &mut $t>(&self.crc), data)
                 }
+            }
+
+            pub fn final_crc(&self, crc: &$t) -> $t {
+                if self.reflect {
+                    crc ^ self.final_xor
+                } else {
+                    crc >> self.offset ^ self.final_xor
+                }
+            }
+
+            pub fn r#final(&self) -> $t {
+                self.final_crc(&self.crc)
+            }
+
+            pub fn init_crc(&self, crc: &mut $t) {
+                *crc = self.initial;
             }
 
             pub fn init(&mut self) {
