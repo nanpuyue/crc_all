@@ -37,7 +37,7 @@ macro_rules! crc_impl {
                     for (i, v) in lookup_table.iter_mut().enumerate() {
                         *v = i as $t;
                         for _ in 0..8 {
-                            if *v & 1 == 1 {
+                            if v.trailing_zeros() == 0 {
                                 *v >>= 1;
                                 *v = *v ^ poly;
                             } else {
@@ -46,13 +46,12 @@ macro_rules! crc_impl {
                         }
                     }
                 } else {
-                    const MASK: $t = (1 as $t).reverse_bits();
                     const OFFSET: usize = size_of::<$t>() * 8 - 8;
 
                     for (i, v) in lookup_table.iter_mut().enumerate() {
                         *v = (i as $t) << OFFSET;
                         for _ in 0..8 {
-                            if *v & MASK == MASK {
+                            if v.leading_zeros() == 0 {
                                 *v <<= 1;
                                 *v = *v ^ poly;
                             } else {
