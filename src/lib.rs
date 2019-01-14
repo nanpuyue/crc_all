@@ -2,7 +2,7 @@
 #![feature(const_int_conversion)]
 #![allow(mutable_transmutes)]
 
-use std::mem::{size_of, transmute};
+use core::mem::{size_of, transmute};
 
 pub struct Crc<T> {
     crc: T,
@@ -38,8 +38,7 @@ macro_rules! crc_impl {
                         *v = i as $t;
                         for _ in 0..8 {
                             if v.trailing_zeros() == 0 {
-                                *v >>= 1;
-                                *v = *v ^ poly;
+                                *v = *v >> 1 ^ poly;
                             } else {
                                 *v >>= 1;
                             }
@@ -47,13 +46,11 @@ macro_rules! crc_impl {
                     }
                 } else {
                     const OFFSET: usize = size_of::<$t>() * 8 - 8;
-
                     for (i, v) in lookup_table.iter_mut().enumerate() {
                         *v = (i as $t) << OFFSET;
                         for _ in 0..8 {
                             if v.leading_zeros() == 0 {
-                                *v <<= 1;
-                                *v = *v ^ poly;
+                                *v = *v << 1 ^ poly;
                             } else {
                                 *v <<= 1;
                             }
