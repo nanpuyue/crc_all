@@ -18,10 +18,9 @@ macro_rules! crc_impl {
         impl Crc<$t> {
             pub fn new(poly: $t, width: usize, init: $t, xorout: $t, reflect: bool) -> Self {
                 let offset = size_of::<$t>() * 8 - width;
-                let init = if reflect { init.reverse_bits() >> offset } else { init };
                 Self {
-                    crc: init,
-                    offset: size_of::<$t>() * 8 - width,
+                    crc: if reflect { init.reverse_bits() >> offset } else { init },
+                    offset,
                     reflect,
                     init,
                     xorout,
