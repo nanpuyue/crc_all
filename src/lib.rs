@@ -5,7 +5,6 @@ use std::mem::size_of;
 
 pub struct Crc<T> {
     crc: T,
-    poly: T,
     offset: usize,
     reflect: bool,
     initial: T,
@@ -17,28 +16,28 @@ macro_rules! crc_impl {
     ($($t:tt)*) => ($(
         impl Crc<$t> {
             pub fn new(poly: $t, width: usize, initial: $t, final_xor: $t, reflect: bool) -> Self {
-                let offset = size_of::<$t>() * 8 - width;
-                let mut crc = Self {
+                Self {
                     crc: initial,
-                    poly: if reflect { (poly << offset).reverse_bits() } else { poly << offset },
-                    offset,
+                    offset: size_of::<$t>() * 8 - width,
                     reflect,
                     initial,
                     final_xor,
-                    lookup_table: [0; 256],
-                };
-                crc.make_lookup_table();
-                crc
+                    lookup_table: Self::make_lookup_table(poly, width, reflect),
+                }
             }
 
-            fn make_lookup_table(&mut self) {
-                if self.reflect {
-                    for (i, v) in self.lookup_table.iter_mut().enumerate() {
+            pub fn make_lookup_table(poly: $t, width: usize, reflect: bool) -> [$t; 256] {
+                let offset = size_of::<$t>() * 8 - width;
+                let poly = if reflect { (poly << offset).reverse_bits() } else { poly << offset };
+
+                let mut lookup_table = [0 as $t; 256];
+                if reflect {
+                    for (i, v) in lookup_table.iter_mut().enumerate() {
                         *v = i as $t;
                         for _ in 0..8 {
                             if *v & 1 == 1 {
                                 *v >>= 1;
-                                *v = *v ^ self.poly;
+                                *v = *v ^ poly;
                             } else {
                                 *v >>= 1;
                             }
@@ -48,18 +47,19 @@ macro_rules! crc_impl {
                     const MASK: $t = (1 as $t).reverse_bits();
                     const OFFSET: usize = size_of::<$t>() * 8 - 8;
 
-                    for (i, v) in self.lookup_table.iter_mut().enumerate() {
+                    for (i, v) in lookup_table.iter_mut().enumerate() {
                         *v = (i as $t) << OFFSET;
                         for _ in 0..8 {
                             if *v & MASK == MASK {
                                 *v <<= 1;
-                                *v = *v ^ self.poly;
+                                *v = *v ^ poly;
                             } else {
                                 *v <<= 1;
                             }
                         }
                     }
                 }
+                lookup_table
             }
 
             pub fn update(&mut self, data: &[u8]) -> $t {
