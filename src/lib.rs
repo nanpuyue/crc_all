@@ -1,5 +1,6 @@
+#![no_std]
+
 #![feature(reverse_bits)]
-#![feature(const_int_conversion)]
 #![allow(mutable_transmutes)]
 
 use core::mem::{size_of, transmute};
