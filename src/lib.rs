@@ -11,7 +11,7 @@ pub struct Crc<T> {
     reflect: bool,
     init: T,
     xorout: T,
-    lookup_table: [T; 256],
+    table: [T; 256],
 }
 
 macro_rules! crc_impl {
@@ -25,17 +25,17 @@ macro_rules! crc_impl {
                     reflect,
                     init,
                     xorout,
-                    lookup_table: Self::make_lookup_table(poly, width, reflect),
+                    table: Self::make_table(poly, width, reflect),
                 }
             }
 
-            pub fn make_lookup_table(poly: $t, width: usize, reflect: bool) -> [$t; 256] {
+            pub fn make_table(poly: $t, width: usize, reflect: bool) -> [$t; 256] {
                 let offset = size_of::<$t>() * 8 - width;
                 let poly = if reflect { (poly << offset).reverse_bits() } else { poly << offset };
 
-                let mut lookup_table = [0 as $t; 256];
+                let mut table = [0 as $t; 256];
                 if reflect {
-                    for (i, v) in lookup_table.iter_mut().enumerate() {
+                    for (i, v) in table.iter_mut().enumerate() {
                         *v = i as $t;
                         for _ in 0..8 {
                             if v.trailing_zeros() == 0 {
@@ -46,9 +46,8 @@ macro_rules! crc_impl {
                         }
                     }
                 } else {
-                    const OFFSET: usize = size_of::<$t>() * 8 - 8;
-                    for (i, v) in lookup_table.iter_mut().enumerate() {
-                        *v = (i as $t) << OFFSET;
+                    for (i, v) in table.iter_mut().enumerate() {
+                        *v = (i as $t) << size_of::<$t>() * 8 - 8;
                         for _ in 0..8 {
                             if v.leading_zeros() == 0 {
                                 *v = *v << 1 ^ poly;
@@ -58,34 +57,34 @@ macro_rules! crc_impl {
                         }
                     }
                 }
-                lookup_table
+                table
             }
 
             pub fn update_crc(&self, crc: &mut $t, data: &[u8]) -> $t {
-                macro_rules! update {
+                macro_rules! crc_update {
                     (u8) => {
                         if !self.reflect {
                             *crc <<= self.offset;
                         }
 
                         for b in data {
-                            *crc = self.lookup_table[(*crc ^ b) as usize];
+                            *crc = self.table[(*crc ^ b) as usize];
                         }
                     };
                     ($_:ty) => {
                         if self.reflect {
                             for b in data {
-                                *crc = *crc >> 8 ^ self.lookup_table[(crc.to_le_bytes()[0] ^ b) as usize];
+                                *crc = *crc >> 8 ^ self.table[(crc.to_le_bytes()[0] ^ b) as usize];
                             }
                         } else {
                             *crc <<= self.offset;
                             for b in data {
-                                *crc = *crc << 8 ^ self.lookup_table[(crc.to_be_bytes()[0] ^ b) as usize];
+                                *crc = *crc << 8 ^ self.table[(crc.to_be_bytes()[0] ^ b) as usize];
                             }
                         }
                     };
                 }
-                update!($t);
+                crc_update!($t);
 
                 self.final_crc(crc)
             }
