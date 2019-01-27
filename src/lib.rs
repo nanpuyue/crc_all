@@ -86,14 +86,14 @@ macro_rules! crc_impl {
                 }
                 crc_update!($t);
 
-                self.final_crc(crc)
+                self.finish_crc(crc)
             }
 
             pub fn update(&mut self, data: &[u8]) -> $t {
                 self.update_crc(&mut self.crc.borrow_mut(), data)
             }
 
-            pub fn final_crc(&self, crc: &$t) -> $t {
+            pub fn finish_crc(&self, crc: &$t) -> $t {
                 if self.reflect {
                     crc ^ self.xorout
                 } else {
@@ -101,8 +101,8 @@ macro_rules! crc_impl {
                 }
             }
 
-            pub fn r#final(&self) -> $t {
-                self.final_crc(&self.crc.borrow())
+            pub fn finish(&self) -> $t {
+                self.finish_crc(&self.crc.borrow())
             }
 
             pub fn init_crc(&self, crc: &mut $t) {
