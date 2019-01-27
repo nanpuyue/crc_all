@@ -1,11 +1,12 @@
 #![no_std]
 #![feature(reverse_bits)]
+#![feature(cell_update)]
 
-use core::cell::RefCell;
+use core::cell::Cell;
 use core::mem::size_of;
 
 pub struct Crc<T> {
-    crc: RefCell<T>,
+    crc: Cell<T>,
     offset: usize,
     reflect: bool,
     init: T,
@@ -20,7 +21,7 @@ macro_rules! crc_impl {
                 let offset = size_of::<$t>() * 8 - width;
                 let init = if reflect { init.reverse_bits() >> offset } else { init };
                 Self {
-                    crc: RefCell::new(init),
+                    crc: Cell::new(init),
                     offset,
                     reflect,
                     init,
@@ -60,7 +61,7 @@ macro_rules! crc_impl {
                 table
             }
 
-            pub fn update_crc(&self, crc: &mut $t, data: &[u8]) -> $t {
+            fn crc_update(&self, crc: &mut $t, data: &[u8]) -> $t {
                 macro_rules! crc_update {
                     (u8) => {
                         if !self.reflect {
@@ -86,11 +87,15 @@ macro_rules! crc_impl {
                 }
                 crc_update!($t);
 
-                self.finish_crc(crc)
+                *crc
+            }
+
+            pub fn update_crc(&self, crc: &mut $t, data: &[u8]) -> $t {
+                self.finish_crc(&self.crc_update(crc, data))
             }
 
             pub fn update(&mut self, data: &[u8]) -> $t {
-                self.update_crc(&mut self.crc.borrow_mut(), data)
+                self.finish_crc(&self.crc.update(|mut crc| self.crc_update(&mut crc, data)))
             }
 
             pub fn finish_crc(&self, crc: &$t) -> $t {
@@ -102,7 +107,7 @@ macro_rules! crc_impl {
             }
 
             pub fn finish(&self) -> $t {
-                self.finish_crc(&self.crc.borrow())
+                self.finish_crc(&self.crc.get())
             }
 
             pub fn init_crc(&self, crc: &mut $t) {
