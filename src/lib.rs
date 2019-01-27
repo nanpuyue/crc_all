@@ -1,12 +1,12 @@
 #![no_std]
 
 #![feature(reverse_bits)]
-#![allow(mutable_transmutes)]
 
-use core::mem::{size_of, transmute};
+use core::cell::RefCell;
+use core::mem::size_of;
 
 pub struct Crc<T> {
-    crc: T,
+    crc: RefCell<T>,
     offset: usize,
     reflect: bool,
     init: T,
@@ -21,7 +21,7 @@ macro_rules! crc_impl {
                 let offset = size_of::<$t>() * 8 - width;
                 let init = if reflect { init.reverse_bits() >> offset } else { init };
                 Self {
-                    crc: init,
+                    crc: RefCell::new(init),
                     offset,
                     reflect,
                     init,
@@ -91,9 +91,7 @@ macro_rules! crc_impl {
             }
 
             pub fn update(&mut self, data: &[u8]) -> $t {
-                unsafe {
-                    self.update_crc(transmute::<_, &mut $t>(&self.crc), data)
-                }
+                self.update_crc(&mut self.crc.borrow_mut(), data)
             }
 
             pub fn final_crc(&self, crc: &$t) -> $t {
@@ -105,7 +103,7 @@ macro_rules! crc_impl {
             }
 
             pub fn r#final(&self) -> $t {
-                self.final_crc(&self.crc)
+                self.final_crc(&self.crc.borrow())
             }
 
             pub fn init_crc(&self, crc: &mut $t) {
@@ -113,7 +111,7 @@ macro_rules! crc_impl {
             }
 
             pub fn init(&mut self) {
-                self.crc = self.init;
+                *self.crc.get_mut() = self.init;
             }
         }
     )*)
