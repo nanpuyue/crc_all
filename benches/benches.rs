@@ -1,5 +1,5 @@
-use bencher::{benchmark_group, benchmark_main};
 use bencher::Bencher;
+use bencher::{benchmark_group, benchmark_main};
 
 use crc::Crc;
 
@@ -39,5 +39,11 @@ fn crc64_update_kilobytes(b: &mut Bencher) {
     });
 }
 
-benchmark_group!(benches, crc08_update_kilobytes, crc16_update_kilobytes, crc32_update_kilobytes, crc64_update_kilobytes);
+benchmark_group!(
+    benches,
+    crc08_update_kilobytes,
+    crc16_update_kilobytes,
+    crc32_update_kilobytes,
+    crc64_update_kilobytes
+);
 benchmark_main!(benches);

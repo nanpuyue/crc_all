@@ -7,25 +7,33 @@ fn check_all() {
     let data = b"123456789".as_ref();
     let (mut width, mut poly, mut init, mut reflect, mut xorout, mut check, mut name);
 
-    macro_rules! check {
-        ($t:tt) => {
-            println!("{: <24}\t0x{}\t0x{}\t0x{}\t{: >5} ...", name, poly, init, xorout, reflect);
+    macro_rules! crc_check {
+        ($t:tt) => {{
+            println!(
+                "{: <24}\t0x{}\t0x{}\t0x{}\t{: >5} ...",
+                name, poly, init, xorout, reflect
+            );
+
             let mut crc = Crc::<$t>::new(
                 $t::from_str_radix(poly, 16).unwrap(),
                 width,
                 $t::from_str_radix(init, 16).unwrap(),
                 $t::from_str_radix(xorout, 16).unwrap(),
-                reflect
+                reflect,
             );
+
             match name {
                 "CRC-12/UMTS" => {
-                    assert_eq!(crc.update(data).reverse_bits() >> 4, $t::from_str_radix(check, 16).unwrap());
-                },
+                    assert_eq!(
+                        crc.update(data).reverse_bits() >> 4,
+                        $t::from_str_radix(check, 16).unwrap()
+                    );
+                }
                 _ => {
                     assert_eq!(crc.update(data), $t::from_str_radix(check, 16).unwrap());
                 }
             }
-        }
+        }};
     }
 
     let mut temp: Vec<_>;
@@ -40,14 +48,17 @@ fn check_all() {
         name = temp[17].trim_start_matches('"').trim_end_matches('"');
 
         let mut n = 8usize;
-        while width > n { n *= 2; }
+        while width > n {
+            n *= 2;
+        }
+
         match n {
-            8 => { check!(u8); },
-            16 => { check!(u16); },
-            32 => { check!(u32); },
-            64 => { check!(u64); },
-            128 => { check!(u128); },
-            _ => ()
+            8 => crc_check!(u8),
+            16 => crc_check!(u16),
+            32 => crc_check!(u32),
+            64 => crc_check!(u64),
+            128 => crc_check!(u128),
+            _ => (),
         }
     }
 }
