@@ -20,7 +20,7 @@
 
 See `CRC.txt`.
 
-**Note:** `CRC-12/UMTS` need special operation, see `src/tests.rs`.
+**Note:** `CRC-12/UMTS` need special operation, see `tests/tests.rs`.
 
 ## Usage
 
@@ -37,22 +37,23 @@ crc = { git = "https://github.com/nanpuyue/crc" }
 use crc::Crc;
 
 fn main() {
+    let data = b"123456789".as_ref();
     let mut crc5_usb = Crc::<u8>::new(0x05, 5, 0x1f, 0x1f, true);
-    assert_eq!(crc5_usb.update(b"123456789".as_ref()), 0x19);
-    assert_eq!(crc5_usb.update(b"123456789".as_ref()), 0x03);
+    assert_eq!(crc5_usb.update(data), 0x19);
+    assert_eq!(crc5_usb.update(data), 0x03);
 
     crc5_usb.init();
-    assert_eq!(crc5_usb.update(b"123456789".as_ref()), 0x19);
+    assert_eq!(crc5_usb.update(data), 0x19);
 }
 ```
 
 ```rust
-use crc::Crc;
+use crc::CrcAlgo;
 use lazy_static::lazy_static;
 
 fn crc11_umts(data: &[u8]) -> u16 {
     lazy_static! {
-        static ref CRC11_UMTS: Crc<u16> = Crc::<u16>::new(0x307, 11, 0, 0, false);
+        static ref CRC11_UMTS: CrcAlgo<u16> = CrcAlgo::<u16>::new(0x307, 11, 0, 0, false);
     }
 
     let crc = &mut 0u16;

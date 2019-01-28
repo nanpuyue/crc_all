@@ -1,12 +1,9 @@
 #![no_std]
 #![feature(reverse_bits)]
-#![feature(cell_update)]
 
-use core::cell::Cell;
 use core::mem::size_of;
 
-pub struct Crc<T> {
-    crc: Cell<T>,
+pub struct CrcAlgo<T> {
     offset: usize,
     reflect: bool,
     init: T,
@@ -14,14 +11,18 @@ pub struct Crc<T> {
     table: [T; 256],
 }
 
+pub struct Crc<T> {
+    crc: T,
+    algo: CrcAlgo<T>,
+}
+
 macro_rules! crc_impl {
     ($($t:tt)*) => ($(
-        impl Crc<$t> {
+        impl CrcAlgo<$t> {
             pub fn new(poly: $t, width: usize, init: $t, xorout: $t, reflect: bool) -> Self {
                 let offset = size_of::<$t>() * 8 - width;
                 let init = if reflect { init.reverse_bits() >> offset } else { init };
                 Self {
-                    crc: Cell::new(init),
                     offset,
                     reflect,
                     init,
@@ -61,7 +62,7 @@ macro_rules! crc_impl {
                 table
             }
 
-            fn crc_update(&self, crc: &mut $t, data: &[u8]) -> $t {
+            pub fn update_crc(&self, crc: &mut $t, data: &[u8]) -> $t {
                 macro_rules! crc_update {
                     (u8) => {
                         if !self.reflect {
@@ -87,15 +88,7 @@ macro_rules! crc_impl {
                 }
                 crc_update!($t);
 
-                *crc
-            }
-
-            pub fn update_crc(&self, crc: &mut $t, data: &[u8]) -> $t {
-                self.finish_crc(&self.crc_update(crc, data))
-            }
-
-            pub fn update(&mut self, data: &[u8]) -> $t {
-                self.finish_crc(&self.crc.update(|mut crc| self.crc_update(&mut crc, data)))
+                self.finish_crc(crc)
             }
 
             pub fn finish_crc(&self, crc: &$t) -> $t {
@@ -106,16 +99,31 @@ macro_rules! crc_impl {
                 }
             }
 
-            pub fn finish(&self) -> $t {
-                self.finish_crc(&self.crc.get())
-            }
-
             pub fn init_crc(&self, crc: &mut $t) {
                 *crc = self.init;
             }
+        }
+
+        impl Crc<$t> {
+            pub fn new(poly: $t, width: usize, init: $t, xorout: $t, reflect: bool) -> Self {
+                let algo = CrcAlgo::<$t>::new(poly, width, init, xorout, reflect);
+                Self {
+                    crc: algo.init,
+                    algo
+                }
+            }
+
+            pub fn update(&mut self, data: &[u8]) -> $t {
+                self.algo.update_crc(&mut self.crc, data);
+                self.finish()
+            }
+
+            pub fn finish(&self) -> $t {
+                self.algo.finish_crc(&self.crc)
+            }
 
             pub fn init(&mut self) {
-                *self.crc.get_mut() = self.init;
+                self.crc = self.algo.init;
             }
         }
     )*)
