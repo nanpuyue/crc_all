@@ -5,10 +5,3 @@ authors = ["nanpuyue <nanpuyue@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-
-[dev-dependencies]
-bencher = "0.1.5"
-
-[[bench]]
-name = "benches"
-harness = false
