@@ -1,6 +1,6 @@
 #![feature(reverse_bits)]
 
-use crc::Crc;
+use crc_all::Crc;
 
 #[test]
 fn check_all() {

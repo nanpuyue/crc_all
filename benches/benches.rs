@@ -2,8 +2,8 @@
 
 extern crate test;
 
+use crc_all::Crc;
 use test::Bencher;
-use crc::Crc;
 
 #[bench]
 fn crc08_update_kilobytes(b: &mut Bencher) {

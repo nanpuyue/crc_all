@@ -1,7 +1,12 @@
 [package]
-name = "crc"
+name = "crc_all"
 version = "0.1.0"
 authors = ["nanpuyue <nanpuyue@gmail.com>"]
 edition = "2018"
-
-[dependencies]
+description = "A Pure Rust Implementation of Generic CRC Algorithm"
+readme = "README.md"
+homepage = "https://github.com/nanpuyue/crc"
+repository = "https://github.com/nanpuyue/crc"
+license = "MIT OR Apache-2.0"
+categories = ["algorithms", "embedded", "no-std"]
+keywords = ["crc", "crc8", "crc16", "crc32", "crc64"]

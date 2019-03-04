@@ -24,17 +24,17 @@ See `CRC.txt`.
 
 ## Usage
 
-Add crc to Cargo.toml
+Add crc_all to Cargo.toml
 
 ```toml
 [dependencies]
-crc = { git = "https://github.com/nanpuyue/crc" }
+crc_all = { git = "https://github.com/nanpuyue/crc" }
 ```
 
 ## Example
 
 ```rust
-use crc::Crc;
+use crc_all::Crc;
 
 fn main() {
     let data = b"123456789".as_ref();
@@ -48,7 +48,7 @@ fn main() {
 ```
 
 ```rust
-use crc::CrcAlgo;
+use crc_all::CrcAlgo;
 use lazy_static::lazy_static;
 
 fn crc11_umts(data: &[u8]) -> u16 {
