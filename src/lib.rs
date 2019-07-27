@@ -1,5 +1,4 @@
 #![no_std]
-#![feature(reverse_bits)]
 
 use core::mem::size_of;
 

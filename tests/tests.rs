@@ -1,5 +1,3 @@
-#![feature(reverse_bits)]
-
 use crc_all::Crc;
 
 #[test]
