@@ -3,6 +3,7 @@
 use core::mem::size_of;
 
 pub struct CrcAlgo<T> {
+    poly: T,
     offset: usize,
     init: T,
     xorout: T,
@@ -23,6 +24,7 @@ macro_rules! crc_impl {
                 let poly = if reflect { (poly << offset).reverse_bits() } else { poly << offset };
                 let init = if reflect { init.reverse_bits() >> offset } else { init };
                 Self {
+                    poly,
                     offset,
                     init,
                     xorout,
@@ -88,6 +90,27 @@ macro_rules! crc_impl {
                 self.finish_crc(crc)
             }
 
+            /// The bits `0b01010000` with offset `3` means `0b01010`.
+            ///
+            /// # Panics
+            ///
+            /// Panics if `self.reflect` is `true` or `offset >= 8`.
+            pub fn update_bits_crc(&self, crc: &mut $t, bits: u8, offset: usize) -> $t {
+                assert!(!self.reflect);
+                assert!(offset < 8);
+
+                *crc ^= ((bits & 0xff << offset) as $t) << ((size_of::<$t>() - 1) * 8);
+                for _ in offset..8 {
+                    if crc.leading_zeros() == 0 {
+                        *crc = *crc << 1 ^ self.poly;
+                    } else {
+                        *crc <<= 1;
+                    }
+                }
+
+                self.finish_crc(crc)
+            }
+
             pub fn finish_crc(&self, crc: &$t) -> $t {
                 if self.reflect {
                     crc ^ self.xorout
@@ -112,6 +135,11 @@ macro_rules! crc_impl {
 
             pub fn update(&mut self, data: &[u8]) -> $t {
                 self.algo.update_crc(&mut self.crc, data)
+            }
+
+            /// See `CrcAlgo::update_bits_crc()`.
+            pub fn update_bits(&mut self, bits: u8, offset: usize) -> $t {
+                self.algo.update_bits_crc(&mut self.crc, bits, offset)
             }
 
             pub fn finish(&self) -> $t {
