@@ -4,9 +4,9 @@ use core::mem::size_of;
 
 pub struct CrcAlgo<T> {
     offset: usize,
-    reflect: bool,
     init: T,
     xorout: T,
+    reflect: bool,
     table: [T; 256],
 }
 
@@ -20,20 +20,18 @@ macro_rules! crc_impl {
         impl CrcAlgo<$t> {
             pub fn new(poly: $t, width: usize, init: $t, xorout: $t, reflect: bool) -> Self {
                 let offset = size_of::<$t>() * 8 - width;
+                let poly = if reflect { (poly << offset).reverse_bits() } else { poly << offset };
                 let init = if reflect { init.reverse_bits() >> offset } else { init };
                 Self {
                     offset,
-                    reflect,
                     init,
                     xorout,
-                    table: Self::make_table(poly, width, reflect),
+                    reflect,
+                    table: Self::make_table(poly, reflect),
                 }
             }
 
-            pub fn make_table(poly: $t, width: usize, reflect: bool) -> [$t; 256] {
-                let offset = size_of::<$t>() * 8 - width;
-                let poly = if reflect { (poly << offset).reverse_bits() } else { poly << offset };
-
+            fn make_table(poly: $t, reflect: bool) -> [$t; 256] {
                 let mut table = [0 as $t; 256];
                 if reflect {
                     for (i, v) in table.iter_mut().enumerate() {
@@ -113,8 +111,7 @@ macro_rules! crc_impl {
             }
 
             pub fn update(&mut self, data: &[u8]) -> $t {
-                self.algo.update_crc(&mut self.crc, data);
-                self.finish()
+                self.algo.update_crc(&mut self.crc, data)
             }
 
             pub fn finish(&self) -> $t {
