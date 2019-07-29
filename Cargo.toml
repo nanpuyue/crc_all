@@ -1,6 +1,6 @@
 [package]
 name = "crc_all"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["nanpuyue <nanpuyue@gmail.com>"]
 edition = "2018"
 description = "A Pure Rust Implementation of Generic CRC Algorithm"

@@ -1,5 +1,7 @@
 # A Pure Rust Implementation of Generic CRC Algorithm
 
+[![Crates.io](https://img.shields.io/crates/v/crc_all?color=green)](https://crates.io/crates/crc_all)
+
 ## Supported Algorithms
 
 `CRC-3/GSM`,`CRC-3/ROHC`,`CRC-4/G-704`,`CRC-4/INTERLAKEN`,`CRC-5/EPC-C1G2`,`CRC-5/G-704`,`CRC-5/USB`,`CRC-6/CDMA2000-A`,
@@ -28,7 +30,7 @@ Add crc_all to Cargo.toml
 
 ```toml
 [dependencies]
-crc_all = { git = "https://github.com/nanpuyue/crc" }
+crc_all = "0.2.0"
 ```
 
 ## Example
