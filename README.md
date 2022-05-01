@@ -26,37 +26,20 @@ See `CRC.txt`.
 
 ## Usage
 
-Add crc_all to Cargo.toml
+Add `crc_all` to `Cargo.toml`
 
 ```toml
 [dependencies]
-crc_all = "0.2.0"
+crc_all = "0.2.1"
 ```
 
 ## Example
 
 ```rust
-use crc_all::Crc;
-
-fn main() {
-    let data = b"123456789".as_ref();
-    let mut crc5_usb = Crc::<u8>::new(0x05, 5, 0x1f, 0x1f, true);
-    assert_eq!(crc5_usb.update(data), 0x19);
-    assert_eq!(crc5_usb.update(data), 0x03);
-
-    crc5_usb.init();
-    assert_eq!(crc5_usb.update(data), 0x19);
-}
-```
-
-```rust
 use crc_all::CrcAlgo;
-use lazy_static::lazy_static;
 
 fn crc11_umts(data: &[u8]) -> u16 {
-    lazy_static! {
-        static ref CRC11_UMTS: CrcAlgo<u16> = CrcAlgo::<u16>::new(0x307, 11, 0, 0, false);
-    }
+    const CRC11_UMTS: CrcAlgo<u16> = CrcAlgo::<u16>::new(0x307, 11, 0, 0, false);
 
     let crc = &mut 0u16;
     CRC11_UMTS.init_crc(crc);
@@ -65,6 +48,21 @@ fn crc11_umts(data: &[u8]) -> u16 {
 
 fn main() {
     assert_eq!(crc11_umts(b"123456789".as_ref()), 0x061);
+}
+```
+
+```rust
+use crc_all::Crc;
+
+fn main() {
+    let data = b"123456789".as_ref();
+    let mut crc5_usb = Crc::<u8>::new(0x05, 5, 0x1f, 0x1f, true);
+
+    assert_eq!(crc5_usb.update(data), 0x19);
+    assert_eq!(crc5_usb.update(data), 0x03);
+
+    crc5_usb.init();
+    assert_eq!(crc5_usb.update(data), 0x19);
 }
 ```
 

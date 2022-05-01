@@ -1,12 +1,16 @@
 [package]
 name = "crc_all"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["nanpuyue <nanpuyue@gmail.com>"]
-edition = "2018"
+edition = "2021"
 description = "A Pure Rust Implementation of Generic CRC Algorithm"
 readme = "README.md"
-homepage = "https://github.com/nanpuyue/crc"
-repository = "https://github.com/nanpuyue/crc"
+homepage = "https://github.com/nanpuyue/crc_all"
+repository = "https://github.com/nanpuyue/crc_all"
 license = "MIT OR Apache-2.0"
 categories = ["algorithms", "embedded", "no-std"]
 keywords = ["crc", "crc8", "crc16", "crc32", "crc64"]
+exclude = ["/macros"]
+
+[dependencies]
+crc_all_macros = { path = "macros", version = "0.1.0" }
