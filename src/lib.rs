@@ -64,8 +64,6 @@
 
 #![no_std]
 
-use core::mem::size_of;
-
 pub struct CrcAlgo<T> {
     poly: T,
     offset: usize,
@@ -108,7 +106,7 @@ macro_rules! crc_impl {
                     }
                 } else {
                     const fn table_value(index: usize, poly: $t) -> $t {
-                        let mut v = (index as $t) << size_of::<$t>() * 8 - 8;
+                        let mut v = (index as $t) << $t::BITS - 8;
                         let mut i = 0;
                         while i < 8 {
                             if v.leading_zeros() == 0 {
@@ -132,7 +130,7 @@ macro_rules! crc_impl {
             }
 
             pub const fn new(poly: $t, width: usize, init: $t, xorout: $t, reflect: bool) -> Self {
-                let offset = size_of::<$t>() * 8 - width;
+                let offset = $t::BITS as usize - width;
                 let poly = if reflect { (poly << offset).reverse_bits() } else { poly << offset };
                 let init = if reflect { init.reverse_bits() >> offset } else { init };
                 Self {
@@ -183,7 +181,7 @@ macro_rules! crc_impl {
                 assert!(!self.reflect);
                 assert!(offset < 8);
 
-                *crc ^= ((bits & 0xff << offset) as $t) << ((size_of::<$t>() - 1) * 8);
+                *crc ^= ((bits & 0xff << offset) as $t) << $t::BITS - 8;
                 for _ in offset..8 {
                     if crc.leading_zeros() == 0 {
                         *crc = *crc << 1 ^ self.poly;
