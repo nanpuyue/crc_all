@@ -30,7 +30,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! crc_all = "0.2.1"
+//! crc_all = "0.2.2"
 //! ```
 //!
 //! ## Example
@@ -84,39 +84,51 @@ macro_rules! crc_impl {
     ($($t:tt)*) => ($(
         impl CrcAlgo<$t> {
             const fn make_table(poly: $t, reflect: bool)-> [$t; 256] {
-                const fn table_value_reflect(index: usize, poly: $t) -> $t {
-                    let mut v = index as $t;
-                    let mut i = 0;
-                    while i < 8 {
-                        if v.trailing_zeros() == 0 {
-                            v = v >> 1 ^ poly;
-                        } else {
-                            v >>= 1;
-                        }
-                        i += 1;
-                    }
-                    v
-                }
-
-                const fn table_value(index: usize, poly: $t) -> $t {
-                    let mut v = (index as $t) << size_of::<$t>() * 8 - 8;
-                    let mut i = 0;
-                    while i < 8 {
-                        if v.leading_zeros() == 0 {
-                            v = v << 1 ^ poly;
-                        } else {
-                            v <<= 1;
-                        }
-                        i += 1;
-                    }
-                    v
-                }
+                let mut table = [0 as $t; 256];
 
                 if reflect {
-                    crc_all_macros::make_crc_table!(table_value_reflect, poly)
+                    const fn table_value(index: usize, poly: $t) -> $t {
+                        let mut v = index as $t;
+                        let mut i = 0;
+                        while i < 8 {
+                            if v.trailing_zeros() == 0 {
+                                v = v >> 1 ^ poly;
+                            } else {
+                                v >>= 1;
+                            }
+                            i += 1;
+                        }
+                        v
+                    }
+
+                    let mut i = 0;
+                    while i < 256 {
+                        table[i] = table_value(i, poly);
+                        i += 1;
+                    }
                 } else {
-                    crc_all_macros::make_crc_table!(table_value, poly)
+                    const fn table_value(index: usize, poly: $t) -> $t {
+                        let mut v = (index as $t) << size_of::<$t>() * 8 - 8;
+                        let mut i = 0;
+                        while i < 8 {
+                            if v.leading_zeros() == 0 {
+                                v = v << 1 ^ poly;
+                            } else {
+                                v <<= 1;
+                            }
+                            i += 1;
+                        }
+                        v
+                    }
+
+                    let mut i = 0;
+                    while i < 256 {
+                        table[i] = table_value(i, poly);
+                        i += 1;
+                    }
                 }
+
+                table
             }
 
             pub const fn new(poly: $t, width: usize, init: $t, xorout: $t, reflect: bool) -> Self {

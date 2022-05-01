@@ -30,7 +30,7 @@ Add `crc_all` to `Cargo.toml`
 
 ```toml
 [dependencies]
-crc_all = "0.2.1"
+crc_all = "0.2.2"
 ```
 
 ## Example
